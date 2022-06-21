@@ -1,5 +1,5 @@
 class CurvatureLikelihood(Analytical1DLikelihood):
-    def __init__(self, x, func, eta, power, noise=None):
+    def __init__(self, x, func, eta, power, noise=None, eta0=10):
         """
         Custom likelihood function using a probability distribution derived
         from power vs arc curvature.
@@ -20,6 +20,8 @@ class CurvatureLikelihood(Analytical1DLikelihood):
             eta for the observations
         noise: array_like
             initial noise level estimate for each observation
+        eta0: float
+            the reference curvature value used to form the normalised eta array
         """
 
         super(CurvatureLikelihood, self).__init__(x=x, y=np.zeros(np.shape(x)), func=func)
@@ -27,6 +29,7 @@ class CurvatureLikelihood(Analytical1DLikelihood):
         self.norm_eta = eta
         self.power = power
         self.noise = noise
+        self.eta0 = eta0
         self.deta = eta[:,1:] - eta[:,:-1] # array of steps in eta
 
     def log_likelihood(self):
@@ -39,7 +42,7 @@ class CurvatureLikelihood(Analytical1DLikelihood):
         integral = integral.reshape((len(integral), 1))
         eta_prob_norm = eta_prob / integral     # normalize power
         
-        ymodel = 10 / np.sqrt(-self.residual)     # convert model eta to normalized value
+        ymodel = self.eta0 / np.sqrt(-self.residual)     # convert model eta to normalized value
         l = np.zeros(len(self.norm_eta))
         outside = np.argwhere((ymodel > np.max(self.norm_eta, axis=1)) |
                           (ymodel < np.min(self.norm_eta, axis=1))).flatten()
